@@ -34,6 +34,7 @@
       <nav class="tabs" aria-label="Разделы">
         <button class="tab-button is-active" type="button" data-tab="finder">Определитель</button>
         <button class="tab-button" type="button" data-tab="library">Библиотека аккордов</button>
+        <button class="tab-button" type="button" data-tab="scales">Гаммы</button>
       </nav>
 
       <section class="tab-view is-active" id="finder-view">
@@ -229,6 +230,84 @@
               </div>
               <div class="voicing-grid" id="voicing-grid"></div>
             </div>
+          </section>
+        </section>
+      </section>
+
+      <section class="tab-view" id="scales-view" hidden>
+        <section class="panel scale-panel" aria-labelledby="scale-explorer-title">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">Джем</p>
+              <h2 id="scale-explorer-title">Карта гаммы на грифе</h2>
+            </div>
+            <div class="instrument-switch" role="group" aria-label="Инструмент для гамм">
+              <button class="instrument-button is-active" type="button" data-instrument="guitar">Гитара</button>
+              <button class="instrument-button" type="button" data-instrument="bass">Бас</button>
+            </div>
+          </div>
+
+          <div class="scale-controls">
+            <label class="field">
+              <span>Тональность</span>
+              <select id="scale-root-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Лад</span>
+              <select id="scale-mode-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Строй</span>
+              <select id="scale-tuning-select"></select>
+            </label>
+
+            <div class="scale-display-switch" role="group" aria-label="Подписи на карте гаммы">
+              <button class="scale-display-button is-active" type="button" data-scale-display="notes">Ноты</button>
+              <button class="scale-display-button" type="button" data-scale-display="degrees">Ступени</button>
+            </div>
+          </div>
+
+          <div class="scale-summary">
+            <div>
+              <p class="kicker">Гамма</p>
+              <h2 id="scale-map-title">-</h2>
+            </div>
+            <div class="summary-lines">
+              <p class="muted" id="scale-map-notes"></p>
+              <p class="muted" id="scale-map-formula"></p>
+            </div>
+          </div>
+
+          <div class="legend-row" id="scale-map-legend"></div>
+
+          <div class="fretboard-scroll draggable-scroll" id="scale-map-scroll">
+            <div class="fretboard full-fretboard interval-map scale-map" id="scale-map-board"></div>
+          </div>
+        </section>
+
+        <section class="workspace scale-workspace">
+          <section class="panel side-panel" aria-labelledby="scale-degrees-title">
+            <div class="detail-head">
+              <div>
+                <p class="kicker">Ступени</p>
+                <h2 id="scale-degrees-title">Что звучит</h2>
+              </div>
+              <p class="muted" id="scale-map-type"></p>
+            </div>
+            <div class="degree-grid" id="scale-degree-grid"></div>
+          </section>
+
+          <section class="panel side-panel" aria-labelledby="scale-related-title">
+            <div class="detail-head">
+              <div>
+                <p class="kicker">Аккорды</p>
+                <h2 id="scale-related-title">Подойдут к этой гамме</h2>
+              </div>
+              <p class="muted">Для семинотных ладов показаны диатонические трезвучия и септаккорды.</p>
+            </div>
+            <div class="degree-grid" id="scale-related-chords"></div>
           </section>
         </section>
       </section>

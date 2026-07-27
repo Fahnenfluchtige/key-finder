@@ -177,6 +177,23 @@
     blues: "блюзовая гамма"
   };
 
+  const SCALE_DEGREE_NAMES = {
+    "1": "тоника",
+    "b2": "малая секунда",
+    "2": "секунда",
+    "b3": "малая терция",
+    "3": "большая терция",
+    "4": "кварта",
+    "#4": "увеличенная кварта",
+    "b5": "уменьшенная квинта",
+    "5": "квинта",
+    "b6": "малая секста",
+    "6": "секста",
+    "bb7": "уменьшенная септима",
+    "b7": "малая септима",
+    "7": "большая септима"
+  };
+
   const EXTENSION_STEPS = {
     triad: [0, 2, 4],
     seventh: [0, 2, 4, 6],
@@ -236,7 +253,10 @@
     libraryMode: "major",
     libraryDegree: 0,
     libraryExtension: "triad",
-    libraryVoicingFilter: "all"
+    libraryVoicingFilter: "all",
+    scaleRoot: "C",
+    scaleMode: "major",
+    scaleDisplay: "notes"
   };
 
   const elements = {
@@ -274,7 +294,19 @@
     libraryMapBoard: document.querySelector("#library-map-board"),
     intervalLegend: document.querySelector("#interval-legend"),
     voicingTitle: document.querySelector("#voicing-title"),
-    voicingGrid: document.querySelector("#voicing-grid")
+    voicingGrid: document.querySelector("#voicing-grid"),
+    scaleRootSelect: document.querySelector("#scale-root-select"),
+    scaleModeSelect: document.querySelector("#scale-mode-select"),
+    scaleTuningSelect: document.querySelector("#scale-tuning-select"),
+    scaleMapTitle: document.querySelector("#scale-map-title"),
+    scaleMapNotes: document.querySelector("#scale-map-notes"),
+    scaleMapFormula: document.querySelector("#scale-map-formula"),
+    scaleMapType: document.querySelector("#scale-map-type"),
+    scaleMapLegend: document.querySelector("#scale-map-legend"),
+    scaleMapScroll: document.querySelector("#scale-map-scroll"),
+    scaleMapBoard: document.querySelector("#scale-map-board"),
+    scaleDegreeGrid: document.querySelector("#scale-degree-grid"),
+    scaleRelatedChords: document.querySelector("#scale-related-chords")
   };
 
   function transpose(note, semitones) {
@@ -311,6 +343,10 @@
 
   function displayNotes(notes, scale) {
     return notes.map((note) => displayNote(note, scale)).join(" ");
+  }
+
+  function displayChordSymbol(chord, scale) {
+    return `${displayNote(chord.root, scale)}${chord.symbol.slice(chord.root.length)}`;
   }
 
   function activeTuning() {
@@ -641,6 +677,24 @@
     return "?";
   }
 
+  function scaleDegreeLabel(root, note) {
+    const semitones = (NOTE_INDEX[note] - NOTE_INDEX[root] + 12) % 12;
+    return {
+      0: "1",
+      1: "b2",
+      2: "2",
+      3: "b3",
+      4: "3",
+      5: "4",
+      6: "#4",
+      7: "5",
+      8: "b6",
+      9: "6",
+      10: "b7",
+      11: "7"
+    }[semitones] || "?";
+  }
+
   function chordToneMap(chord) {
     return chord.notes.map((note, index) => ({
       note,
@@ -745,14 +799,16 @@
 
   function renderTuningOptions() {
     const tunings = TUNINGS[state.instrument];
-    elements.tuningSelect.innerHTML = "";
-    tunings.forEach((tuning) => {
-      const option = document.createElement("option");
-      option.value = tuning.id;
-      option.textContent = `${tuning.name} (${tuning.label})`;
-      elements.tuningSelect.append(option);
+    [elements.tuningSelect, elements.scaleTuningSelect].filter(Boolean).forEach((select) => {
+      select.innerHTML = "";
+      tunings.forEach((tuning) => {
+        const option = document.createElement("option");
+        option.value = tuning.id;
+        option.textContent = `${tuning.name} (${tuning.label})`;
+        select.append(option);
+      });
+      select.value = state.tuningId;
     });
-    elements.tuningSelect.value = state.tuningId;
   }
 
   function renderNoteSelect(select, value) {
@@ -793,6 +849,26 @@
     renderLibraryDegreeSelect();
   }
 
+  function renderScaleSelects() {
+    elements.scaleRootSelect.innerHTML = "";
+    NOTE_NAMES.forEach((note) => {
+      const option = document.createElement("option");
+      option.value = note;
+      option.textContent = note;
+      elements.scaleRootSelect.append(option);
+    });
+    elements.scaleRootSelect.value = state.scaleRoot;
+
+    elements.scaleModeSelect.innerHTML = "";
+    SCALE_TYPES.forEach((scaleType) => {
+      const option = document.createElement("option");
+      option.value = scaleType.id;
+      option.textContent = `${scaleType.name} (${MODE_TRANSLATIONS[scaleType.name]})`;
+      elements.scaleModeSelect.append(option);
+    });
+    elements.scaleModeSelect.value = state.scaleMode;
+  }
+
   function libraryScale() {
     const scaleType = scaleTypeById(state.libraryMode);
     return {
@@ -800,6 +876,22 @@
       scaleType,
       notes: notesForScale(state.libraryRoot, scaleType)
     };
+  }
+
+  function explorerScale() {
+    const scaleType = scaleTypeById(state.scaleMode);
+    return {
+      root: state.scaleRoot,
+      scaleType,
+      notes: notesForScale(state.scaleRoot, scaleType)
+    };
+  }
+
+  function scaleStepPattern(scaleType) {
+    return scaleType.intervals.map((interval, index) => {
+      const next = scaleType.intervals[index + 1] ?? 12;
+      return next - interval;
+    });
   }
 
   function libraryChords(extension) {
@@ -810,6 +902,7 @@
 
   function renderLibraryDegreeSelect() {
     const chords = libraryChords(state.libraryExtension);
+    const scale = libraryScale();
     elements.libraryDegreeSelect.innerHTML = "";
 
     if (!chords.length) {
@@ -826,7 +919,7 @@
     chords.forEach((chord, index) => {
       const option = document.createElement("option");
       option.value = String(index);
-      option.textContent = `${chord.degree} ${chord.symbol}`;
+      option.textContent = `${chord.degree} ${displayChordSymbol(chord, scale)}`;
       elements.libraryDegreeSelect.append(option);
     });
     elements.libraryDegreeSelect.value = String(state.libraryDegree);
@@ -1095,6 +1188,149 @@
         board.append(cell);
       });
     });
+  }
+
+  function renderScaleLegend(scale) {
+    elements.scaleMapLegend.innerHTML = "";
+    scale.notes.forEach((note, index) => {
+      const pill = document.createElement("span");
+      const degree = scaleDegreeLabel(scale.root, note);
+      pill.className = "legend-pill";
+      pill.textContent = `${degree} = ${displayNote(note, scale)}`;
+      elements.scaleMapLegend.append(pill);
+    });
+  }
+
+  function renderScaleMap(scale) {
+    const tuning = activeTuning();
+    const tones = new Map(scale.notes.map((note, index) => [
+      note,
+      {
+        note,
+        degree: scaleDegreeLabel(scale.root, note),
+        isRoot: note === scale.root
+      }
+    ]));
+    elements.scaleMapBoard.innerHTML = "";
+    elements.scaleMapBoard.style.setProperty("--string-count", String(tuning.strings.length));
+
+    const corner = document.createElement("div");
+    corner.className = "fret-label";
+    elements.scaleMapBoard.append(corner);
+
+    FRETS.forEach((fret) => {
+      const label = document.createElement("div");
+      label.className = `fret-label${fret === 0 ? " is-open-fret" : ""}`;
+      label.textContent = fret;
+      elements.scaleMapBoard.append(label);
+    });
+
+    tuning.strings.forEach((stringInfo) => {
+      const stringLabel = document.createElement("div");
+      stringLabel.className = "string-label";
+      stringLabel.textContent = stringInfo.label;
+      elements.scaleMapBoard.append(stringLabel);
+
+      FRETS.forEach((fret) => {
+        const note = noteAt(stringInfo.note, fret);
+        const tone = tones.get(note);
+        const cell = document.createElement("button");
+        cell.className = `fret-button${fret === 0 ? " is-open-string" : ""}`;
+        cell.type = "button";
+        cell.tabIndex = -1;
+        cell.setAttribute(
+          "aria-label",
+          tone
+            ? `${stringInfo.label}, лад ${fret}, ${tone.degree} ${displayNote(note, scale)}`
+            : `${stringInfo.label}, лад ${fret}, вне гаммы`
+        );
+        if (tone) {
+          cell.classList.add("is-tone");
+          if (tone.isRoot) cell.classList.add("is-root");
+        }
+
+        const label = document.createElement("span");
+        label.textContent = tone
+          ? state.scaleDisplay === "degrees"
+            ? tone.degree
+            : displayNote(note, scale)
+          : "";
+        cell.append(label);
+        elements.scaleMapBoard.append(cell);
+      });
+    });
+  }
+
+  function renderScaleDegreeGrid(scale) {
+    elements.scaleDegreeGrid.innerHTML = "";
+    scale.notes.forEach((note, index) => {
+      const degree = scaleDegreeLabel(scale.root, note);
+      const card = document.createElement("article");
+      card.className = "degree-card";
+
+      const top = document.createElement("div");
+      top.className = "degree-top";
+      const degreeLabel = document.createElement("span");
+      degreeLabel.textContent = degree;
+      const noteLabel = document.createElement("strong");
+      noteLabel.textContent = displayNote(note, scale);
+      top.append(degreeLabel, noteLabel);
+
+      const description = document.createElement("div");
+      description.className = "degree-notes";
+      description.textContent = SCALE_DEGREE_NAMES[degree] || "ступень";
+      card.append(top, description);
+      elements.scaleDegreeGrid.append(card);
+    });
+  }
+
+  function renderScaleRelatedChords(scale) {
+    elements.scaleRelatedChords.innerHTML = "";
+    if (!scale.scaleType.chords || scale.notes.length !== 7) {
+      const message = document.createElement("div");
+      message.className = "degree-card wide";
+      message.textContent = "Для этой гаммы лучше джемить по подсвеченным нотам; строгая диатоническая сетка аккордов здесь не строится.";
+      elements.scaleRelatedChords.append(message);
+      return;
+    }
+
+    scale.notes.forEach((_, degree) => {
+      const triad = chordFromScaleDegree(scale.notes, degree, "triad");
+      const seventh = chordFromScaleDegree(scale.notes, degree, "seventh");
+      const card = document.createElement("article");
+      card.className = "degree-card";
+
+      const top = document.createElement("div");
+      top.className = "degree-top";
+      const degreeLabel = document.createElement("span");
+      degreeLabel.textContent = triad.degree;
+      const symbols = document.createElement("strong");
+      symbols.textContent = `${displayChordSymbol(triad, scale)} / ${displayChordSymbol(seventh, scale)}`;
+      top.append(degreeLabel, symbols);
+
+      const notes = document.createElement("div");
+      notes.className = "degree-notes";
+      notes.textContent = displayNotes(triad.notes, scale);
+      card.append(top, notes);
+      elements.scaleRelatedChords.append(card);
+    });
+  }
+
+  function renderScaleExplorer() {
+    const scale = explorerScale();
+    const scaleName = `${scale.root} ${scale.scaleType.name}`;
+    renderScaleSelects();
+    elements.scaleMapTitle.textContent = `${scaleName} для ${state.instrument === "bass" ? "баса" : "гитары"}`;
+    elements.scaleMapNotes.textContent = `Ноты: ${displayNotes(scale.notes, scale)}`;
+    elements.scaleMapFormula.textContent = `Шаги: ${scaleStepPattern(scale.scaleType).join(" - ")}`;
+    elements.scaleMapType.textContent = `${scale.notes.length} нот`;
+    document.querySelectorAll(".scale-display-button").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.scaleDisplay === state.scaleDisplay);
+    });
+    renderScaleLegend(scale);
+    renderScaleMap(scale);
+    renderScaleDegreeGrid(scale);
+    renderScaleRelatedChords(scale);
   }
 
   function generateVoicings(chord) {
@@ -1403,7 +1639,7 @@
     }
 
     const tones = chordToneMap(selectedChord);
-    elements.libraryMapTitle.textContent = `${selectedChord.degree} ${selectedChord.symbol}`;
+    elements.libraryMapTitle.textContent = `${selectedChord.degree} ${displayChordSymbol(selectedChord, scale)}`;
     elements.libraryMapNotes.textContent = displayNotes(selectedChord.notes, scale);
     renderIntervalLegend(tones);
     renderToneMap(elements.libraryMapBoard, selectedChord);
@@ -1431,6 +1667,7 @@
     renderFretboard();
     renderResults();
     renderLibrary();
+    renderScaleExplorer();
     updateVisibleWindowLabels();
   }
 
@@ -1538,6 +1775,12 @@
       render();
     });
 
+    elements.scaleTuningSelect.addEventListener("change", () => {
+      state.tuningId = elements.scaleTuningSelect.value;
+      state.selectedPositions.clear();
+      render();
+    });
+
     elements.centerSelect.addEventListener("change", () => {
       state.centerNote = elements.centerSelect.value;
       state.scalePinned = false;
@@ -1575,6 +1818,23 @@
       renderLibrary();
     });
 
+    elements.scaleRootSelect.addEventListener("change", () => {
+      state.scaleRoot = elements.scaleRootSelect.value;
+      renderScaleExplorer();
+    });
+
+    elements.scaleModeSelect.addEventListener("change", () => {
+      state.scaleMode = elements.scaleModeSelect.value;
+      renderScaleExplorer();
+    });
+
+    document.querySelectorAll(".scale-display-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.scaleDisplay = button.dataset.scaleDisplay;
+        renderScaleExplorer();
+      });
+    });
+
     document.querySelectorAll(".filter-button").forEach((button) => {
       button.addEventListener("click", () => {
         state.filter = button.dataset.filter;
@@ -1603,6 +1863,7 @@
       togglePosition(button.dataset.note, button.dataset.positionKey);
     });
     enableDragScroll(elements.libraryMapScroll);
+    enableDragScroll(elements.scaleMapScroll);
   }
 
   function registerServiceWorker() {
@@ -1618,6 +1879,8 @@
     chordFromScaleDegree,
     intervalLabel,
     displayNotes,
+    explorerScale,
+    scaleStepPattern,
     classifyVoicing,
     generateVoicings,
     state

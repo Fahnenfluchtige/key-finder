@@ -193,7 +193,8 @@ h3 {
 }
 
 .instrument-switch,
-.scale-filter {
+.scale-filter,
+.scale-display-switch {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -201,7 +202,8 @@ h3 {
 }
 
 .instrument-button,
-.filter-button {
+.filter-button,
+.scale-display-button {
   min-height: 34px;
   padding: 0 12px;
   border-radius: 999px;
@@ -211,14 +213,16 @@ h3 {
 }
 
 .instrument-button.is-active,
-.filter-button.is-active {
+.filter-button.is-active,
+.scale-display-button.is-active {
   border-color: var(--accent-strong);
   color: #fff;
   background: var(--accent);
 }
 
 .control-grid,
-.library-controls {
+.library-controls,
+.scale-controls {
   display: grid;
   gap: 10px;
   align-items: end;
@@ -230,6 +234,10 @@ h3 {
 
 .library-controls {
   grid-template-columns: repeat(5, minmax(130px, 1fr));
+}
+
+.scale-controls {
+  grid-template-columns: minmax(130px, 0.8fr) minmax(180px, 1.2fr) minmax(180px, 1.2fr) minmax(180px, 0.8fr);
 }
 
 .field,
@@ -300,6 +308,22 @@ h3 {
 .instrument-head {
   align-items: baseline;
   margin: 12px 0 8px;
+}
+
+.scale-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 16px 0 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.summary-lines {
+  display: grid;
+  gap: 4px;
+  text-align: right;
 }
 
 .fretboard-scroll {
@@ -444,6 +468,16 @@ h3 {
   background: var(--gold);
 }
 
+.scale-map .fret-button:not(.is-tone) span {
+  display: none;
+}
+
+.scale-map .fret-button:not(.is-tone) {
+  background:
+    linear-gradient(90deg, rgba(70, 54, 38, 0.1), transparent 7px),
+    linear-gradient(180deg, #fffdf8, #fbf4ea);
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 0.82fr);
@@ -453,6 +487,10 @@ h3 {
 
 .library-workspace {
   grid-template-columns: minmax(320px, 0.52fr) minmax(0, 1fr);
+}
+
+.scale-workspace {
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1fr);
 }
 
 .results-panel,
@@ -778,8 +816,10 @@ button.degree-card {
 
   .workspace,
   .library-workspace,
+  .scale-workspace,
   .control-grid,
-  .library-controls {
+  .library-controls,
+  .scale-controls {
     grid-template-columns: 1fr;
   }
 
@@ -791,8 +831,18 @@ button.degree-card {
   }
 
   .instrument-switch,
-  .scale-filter {
+  .scale-filter,
+  .scale-display-switch {
     justify-content: flex-start;
+  }
+
+  .scale-summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .summary-lines {
+    text-align: left;
   }
 
   .score-pill {

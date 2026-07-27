@@ -93,10 +93,40 @@ async function clickFret(page, label) {
   const seventhDegreeText = await page.locator("#library-degree-grid").textContent();
   assert.ok(seventhDegreeText.includes("Bm7b5"), "C major seventh chords should include Bm7b5");
 
+  await page.getByRole("button", { name: "Гаммы" }).click();
+  await page.locator("#scale-root-select").selectOption("C");
+  await page.locator("#scale-mode-select").selectOption("natural-minor");
+  assert.equal(await page.locator("#scale-map-title").textContent(), "C natural minor для гитары");
+  assert.equal(await page.locator("#scale-map-notes").textContent(), "Ноты: C D Eb F G Ab Bb");
+  assert.equal(await page.locator("#scale-map-formula").textContent(), "Шаги: 2 - 1 - 2 - 2 - 1 - 2 - 2");
+  assert.equal(await page.locator("#scale-map-board .fret-button").count(), 96);
+  assert.ok((await page.locator("#scale-map-board .fret-button.is-tone").count()) > 30);
+  assert.ok((await page.locator("#scale-map-board .fret-button.is-root").count()) > 4);
+  const scaleLegend = await page.locator("#scale-map-legend").textContent();
+  assert.ok(scaleLegend.includes("b3 = Eb"), "C minor scale legend should spell b3 as Eb");
+  assert.ok(scaleLegend.includes("b7 = Bb"), "C minor scale legend should spell b7 as Bb");
+  const scaleDegreeText = await page.locator("#scale-degree-grid").textContent();
+  assert.ok(scaleDegreeText.includes("b3"), "scale degrees should include b3");
+  assert.ok(scaleDegreeText.includes("малая терция"), "scale degrees should explain b3");
+  const relatedScaleChords = await page.locator("#scale-related-chords").textContent();
+  assert.ok(relatedScaleChords.includes("Cm / Cm7"), "C minor related chords should include Cm / Cm7");
+  assert.ok(relatedScaleChords.includes("Eb / Ebmaj7"), "C minor related chords should include Eb / Ebmaj7");
+  assert.ok((await page.locator("#scale-map-board").textContent()).includes("Eb"), "note-name mode should show note names");
+  await page.getByRole("button", { name: "Ступени" }).click();
+  assert.ok((await page.locator("#scale-map-board").textContent()).includes("b3"), "degree mode should show scale degrees");
+  await page.getByRole("button", { name: "Бас", exact: true }).click();
+  await page.locator("#scale-tuning-select").selectOption("bass-drop-d");
+  assert.equal(await page.locator("#scale-map-board .fret-button").count(), 64);
+  assert.equal(await page.locator("#scale-tuning-select").inputValue(), "bass-drop-d");
+
   const theory = await page.evaluate(() => {
     const api = window.__KEY_FINDER_TESTS__;
     const cMajor = api.notesForScale("C", { intervals: [0, 2, 4, 5, 7, 9, 11] });
     const cMixolydian = api.chordFromScaleDegree(["C", "D", "E", "F", "G", "A", "A#"], 0, "ninth");
+    api.state.scaleRoot = "C";
+    api.state.scaleMode = "natural-minor";
+    const cMinorExplorer = api.explorerScale();
+    const cMinorSteps = api.scaleStepPattern(cMinorExplorer.scaleType);
     const cMixolydianDisplay = api.displayNotes(cMixolydian.notes, {
       root: "C",
       scaleType: { id: "mixolydian" }
@@ -206,10 +236,12 @@ async function clickFret(page, label) {
       })
     );
 
-    return { cMajor, cMixolydian, cMixolydianDisplay, knownShapes, knownTags, relatedCMajor, cagedMajor, allMinorFirstShapes, playableQualityMatrix };
+    return { cMajor, cMixolydian, cMinorExplorer, cMinorSteps, cMixolydianDisplay, knownShapes, knownTags, relatedCMajor, cagedMajor, allMinorFirstShapes, playableQualityMatrix };
   });
   assert.deepEqual(theory.cMajor, ["C", "D", "E", "F", "G", "A", "B"]);
   assert.deepEqual(theory.cMixolydian.notes, ["C", "E", "G", "A#", "D"]);
+  assert.deepEqual(theory.cMinorExplorer.notes, ["C", "D", "D#", "F", "G", "G#", "A#"]);
+  assert.deepEqual(theory.cMinorSteps, [2, 1, 2, 2, 1, 2, 2]);
   assert.equal(theory.cMixolydian.symbol, "C9");
   assert.equal(theory.cMixolydianDisplay, "C E G Bb D");
   assert.deepEqual(theory.knownShapes, {
