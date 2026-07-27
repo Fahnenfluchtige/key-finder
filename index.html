@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4eee2">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests"
+    >
+    <meta name="referrer" content="no-referrer">
+    <meta
+      name="description"
+      content="Определитель тональности и библиотека аккордов по гитарному или басовому грифу."
+    >
+    <title>Key Finder</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="top-panel" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">Гриф, тональность, аккорды</p>
+          <h1 id="app-title">Key Finder</h1>
+        </div>
+
+        <div class="actions">
+          <button class="icon-button" id="undo-button" type="button" title="Отменить последний ввод" aria-label="Отменить последний ввод">↶</button>
+          <button class="text-button" id="clear-button" type="button">Очистить</button>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="Разделы">
+        <button class="tab-button is-active" type="button" data-tab="finder">Определитель</button>
+        <button class="tab-button" type="button" data-tab="library">Библиотека аккордов</button>
+      </nav>
+
+      <section class="tab-view is-active" id="finder-view">
+        <section class="panel fretboard-panel" aria-labelledby="fretboard-title">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">1</p>
+              <h2 id="fretboard-title">Гриф</h2>
+            </div>
+
+            <div class="instrument-switch" role="group" aria-label="Инструмент">
+              <button class="instrument-button is-active" type="button" data-instrument="guitar">Гитара</button>
+              <button class="instrument-button" type="button" data-instrument="bass">Бас</button>
+            </div>
+          </div>
+
+          <div class="control-grid">
+            <label class="field">
+              <span>Строй</span>
+              <select id="tuning-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Тоника</span>
+              <select id="center-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Бас</span>
+              <select id="bass-select"></select>
+            </label>
+
+            <div class="drag-note">
+              <span>Лады 0-15</span>
+              <strong id="visible-window-label">видно 0-5</strong>
+            </div>
+          </div>
+
+          <div class="selected-strip" aria-live="polite">
+            <span class="muted">Выбрано:</span>
+            <div class="chips" id="selected-chips"></div>
+          </div>
+
+          <div class="instrument-head">
+            <h3 id="active-instrument-title">Гитара</h3>
+            <span class="muted" id="active-tuning-label">E A D G B E</span>
+          </div>
+
+          <div class="fretboard-scroll draggable-scroll" id="fretboard-scroll">
+            <div class="fretboard full-fretboard" id="fretboard"></div>
+          </div>
+        </section>
+
+        <section class="workspace">
+          <section class="panel results-panel" aria-labelledby="results-title">
+            <div class="panel-head">
+              <div>
+                <p class="kicker">2</p>
+                <h2 id="results-title">Тональности</h2>
+              </div>
+              <div class="scale-filter" role="group" aria-label="Фильтр гамм">
+                <button class="filter-button is-active" type="button" data-filter="all">все</button>
+                <button class="filter-button" type="button" data-filter="core">база</button>
+                <button class="filter-button" type="button" data-filter="minor">минор</button>
+                <button class="filter-button" type="button" data-filter="color">цвет</button>
+              </div>
+            </div>
+
+            <div class="empty-state" id="empty-state">
+              Отметь ноты на грифе, и здесь появятся варианты.
+            </div>
+
+            <div class="results-list" id="results-list"></div>
+          </section>
+
+          <section class="panel side-panel" aria-labelledby="chords-title">
+            <div class="chord-match-panel" id="chord-match-panel" hidden>
+              <div class="detail-head">
+                <div>
+                  <p class="kicker">Аккорд</p>
+                  <h2 id="chords-title">Из выбранных нот</h2>
+                </div>
+                <p class="muted">Если бас отличается от корня, появится запись вроде C/E.</p>
+              </div>
+              <div class="chord-results" id="chord-results"></div>
+            </div>
+
+            <div class="detail-panel" id="detail-panel" hidden>
+              <div class="detail-head">
+                <div>
+                  <p class="kicker">Аккорды тональности</p>
+                  <h2 id="detail-title">-</h2>
+                </div>
+                <p id="detail-notes" class="muted"></p>
+              </div>
+
+              <div class="degree-section">
+                <h3>Трезвучия</h3>
+                <div class="degree-grid" id="triad-row"></div>
+              </div>
+
+              <div class="degree-section">
+                <h3>Септаккорды</h3>
+                <div class="degree-grid" id="seventh-row"></div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section class="tab-view" id="library-view" hidden>
+        <section class="panel library-panel" aria-labelledby="library-title">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">Библиотека</p>
+              <h2 id="library-title">Аккорды лада</h2>
+            </div>
+            <p class="muted">Выбери тональность, лад и ступень; ниже появятся карта тонов и варианты на грифе.</p>
+          </div>
+
+          <div class="library-controls">
+            <label class="field">
+              <span>Тональность</span>
+              <select id="library-root-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Лад</span>
+              <select id="library-mode-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Ступень</span>
+              <select id="library-degree-select"></select>
+            </label>
+
+            <label class="field">
+              <span>Расширение</span>
+              <select id="library-extension-select">
+                <option value="triad">Трезвучие: 1 3 5</option>
+                <option value="seventh">Септаккорд: 1 3 5 7</option>
+                <option value="ninth">Нонаккорд: 1 3 5 7 9</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="workspace library-workspace">
+          <section class="panel side-panel" aria-labelledby="library-scale-title">
+            <div class="detail-head">
+              <div>
+                <p class="kicker">Лад</p>
+                <h2 id="library-scale-title">-</h2>
+              </div>
+              <p class="muted" id="library-scale-notes"></p>
+            </div>
+            <div class="degree-grid" id="library-degree-grid"></div>
+          </section>
+
+          <section class="panel chord-map-panel" aria-labelledby="library-map-title">
+            <div class="detail-head">
+              <div>
+                <p class="kicker">Визуализация</p>
+                <h2 id="library-map-title">-</h2>
+              </div>
+              <p class="muted" id="library-map-notes"></p>
+            </div>
+
+            <div class="legend-row" id="interval-legend"></div>
+
+            <div class="fretboard-scroll draggable-scroll" id="library-map-scroll">
+              <div class="fretboard full-fretboard interval-map" id="library-map-board"></div>
+            </div>
+
+            <div class="voicing-section">
+              <div class="detail-head">
+                <div>
+                  <p class="kicker">Вариации</p>
+                  <h3 id="voicing-title">Аппликатуры</h3>
+                </div>
+                <p class="muted">Это варианты из тех же ступеней, не единственно правильные формы.</p>
+              </div>
+              <div class="voicing-grid" id="voicing-grid"></div>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
