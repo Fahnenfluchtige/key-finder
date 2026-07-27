@@ -1,4 +1,4 @@
-const CACHE_NAME = "key-finder-v13";
+const CACHE_NAME = "key-finder-v16";
 const ASSETS = [
   "./",
   "./index.html",

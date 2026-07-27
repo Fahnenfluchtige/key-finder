@@ -5,6 +5,7 @@
   const NOTE_INDEX = Object.fromEntries(NOTE_NAMES.map((note, index) => [note, index]));
   const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII"];
   const FRETS = Array.from({ length: 16 }, (_, index) => index);
+  const MARKER_FRETS = new Set([1, 3, 5, 7, 9, 12, 15]);
   const KEYBOARD_NOTES = {
     KeyA: "C",
     KeyW: "C#",
@@ -363,6 +364,14 @@
 
   function noteAt(stringNote, fret) {
     return transpose(stringNote, fret);
+  }
+
+  function fretClass(fret, baseClass) {
+    return `${baseClass}${fret === 0 ? " is-open-fret" : ""}${MARKER_FRETS.has(fret) ? " is-marker-fret" : ""}${fret === 12 ? " is-double-marker-fret" : ""}`;
+  }
+
+  function cellClass(fret, baseClass) {
+    return `${baseClass}${fret === 0 ? " is-open-string" : ""}${MARKER_FRETS.has(fret) ? " is-marker-column" : ""}${fret === 12 ? " is-double-marker-column" : ""}`;
   }
 
   function uniqueSelectedNotes() {
@@ -960,7 +969,7 @@
 
     FRETS.forEach((fret) => {
       const label = document.createElement("div");
-      label.className = `fret-label${fret === 0 ? " is-open-fret" : ""}`;
+      label.className = fretClass(fret, "fret-label");
       label.textContent = fret;
       elements.fretboard.append(label);
     });
@@ -975,7 +984,7 @@
         const note = noteAt(stringInfo.note, fret);
         const positionKey = `${state.instrument}:${state.tuningId}:${stringIndex}:${fret}`;
         const button = document.createElement("button");
-        button.className = `fret-button${fret === 0 ? " is-open-string" : ""}`;
+        button.className = cellClass(fret, "fret-button");
         button.type = "button";
         button.dataset.note = note;
         button.dataset.positionKey = positionKey;
@@ -1158,7 +1167,7 @@
 
     FRETS.forEach((fret) => {
       const label = document.createElement("div");
-      label.className = `fret-label${fret === 0 ? " is-open-fret" : ""}`;
+      label.className = fretClass(fret, "fret-label");
       label.textContent = fret;
       board.append(label);
     });
@@ -1173,7 +1182,7 @@
         const note = noteAt(stringInfo.note, fret);
         const tone = toneByNote.get(note);
         const cell = document.createElement("button");
-        cell.className = `fret-button${fret === 0 ? " is-open-string" : ""}`;
+        cell.className = cellClass(fret, "fret-button");
         cell.type = "button";
         cell.tabIndex = -1;
         cell.setAttribute("aria-label", tone ? `${stringInfo.label}, лад ${fret}, ${tone.label} ${note}` : `${stringInfo.label}, лад ${fret}, ${note}`);
@@ -1220,7 +1229,7 @@
 
     FRETS.forEach((fret) => {
       const label = document.createElement("div");
-      label.className = `fret-label${fret === 0 ? " is-open-fret" : ""}`;
+      label.className = fretClass(fret, "fret-label");
       label.textContent = fret;
       elements.scaleMapBoard.append(label);
     });
@@ -1235,7 +1244,7 @@
         const note = noteAt(stringInfo.note, fret);
         const tone = tones.get(note);
         const cell = document.createElement("button");
-        cell.className = `fret-button${fret === 0 ? " is-open-string" : ""}`;
+        cell.className = cellClass(fret, "fret-button");
         cell.type = "button";
         cell.tabIndex = -1;
         cell.setAttribute(
@@ -1498,7 +1507,7 @@
     container.append(corner);
     frets.forEach((fret) => {
       const label = document.createElement("div");
-      label.className = `mini-label${fret === 0 ? " is-open-fret" : ""}`;
+      label.className = fretClass(fret, "mini-label");
       label.textContent = fret;
       container.append(label);
     });
@@ -1517,7 +1526,7 @@
 
       frets.forEach((fret) => {
         const cell = document.createElement("div");
-        cell.className = `mini-cell${fret === 0 ? " is-open-string" : ""}`;
+        cell.className = cellClass(fret, "mini-cell");
         const picked = voicing.picked[stringIndex];
         const barreRole = barreRoles.get(`${stringIndex}:${fret}`);
         if (barreRole) {

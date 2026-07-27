@@ -1,18 +1,24 @@
 :root {
   color-scheme: light;
-  --paper: #f7f1e8;
-  --ink: #241f1a;
-  --muted: #71685d;
-  --panel: #fffaf2;
-  --line: #d8cab9;
-  --accent: #137a7f;
-  --accent-strong: #0e5f63;
-  --accent-soft: #d8efee;
-  --gold: #b16b1d;
-  --gold-soft: #f4e2be;
-  --rose: #b33c5b;
-  --rose-soft: #f8d7df;
-  --shadow: 0 18px 50px rgba(50, 35, 20, 0.12);
+  --paper: #edf2ff;
+  --ink: #07122f;
+  --muted: #4c5d82;
+  --panel: #f8fbff;
+  --line: #c4cdec;
+  --accent: #0d1b7e;
+  --accent-strong: #05014a;
+  --accent-soft: #dfe5ff;
+  --gold: #253aa6;
+  --gold-soft: #d8e1ff;
+  --rose: #30459f;
+  --rose-soft: #e3e8ff;
+  --surface: #fff;
+  --surface-warm: #f3f6ff;
+  --fret-wood: #e7ecfb;
+  --fret-wood-alt: #f7f9ff;
+  --string-line: rgba(5, 1, 74, 0.26);
+  --nut: #05014a;
+  --shadow: 0 18px 50px rgba(5, 1, 74, 0.13);
 }
 
 * {
@@ -35,8 +41,8 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
   background:
-    linear-gradient(135deg, rgba(19, 122, 127, 0.12), transparent 32rem),
-    linear-gradient(315deg, rgba(177, 107, 29, 0.12), transparent 28rem),
+    linear-gradient(135deg, rgba(13, 27, 126, 0.14), transparent 32rem),
+    linear-gradient(315deg, rgba(5, 1, 74, 0.12), transparent 28rem),
     var(--paper);
 }
 
@@ -45,7 +51,7 @@ select {
   font: inherit;
   border: 1px solid var(--line);
   color: var(--ink);
-  background: #fffdf8;
+  background: var(--surface);
 }
 
 button {
@@ -67,7 +73,7 @@ button:hover {
 .top-panel,
 .panel {
   border: 1px solid var(--line);
-  background: rgba(255, 250, 242, 0.94);
+  background: rgba(248, 251, 255, 0.96);
   box-shadow: var(--shadow);
 }
 
@@ -264,7 +270,7 @@ h3 {
   padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fffdf8;
+  background: var(--surface);
 }
 
 .drag-note strong {
@@ -362,6 +368,34 @@ h3 {
   font-size: 0.68rem;
 }
 
+.fret-label.is-marker-fret,
+.mini-label.is-marker-fret {
+  position: relative;
+  color: var(--accent-strong);
+}
+
+.fret-label.is-marker-fret::before,
+.mini-label.is-marker-fret::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(13, 27, 126, 0.42);
+  transform: translateX(-50%);
+}
+
+.fret-label.is-double-marker-fret::before,
+.mini-label.is-double-marker-fret::before {
+  width: 16px;
+  height: 5px;
+  background:
+    radial-gradient(circle at 3px 50%, rgba(13, 27, 126, 0.46) 0 3px, transparent 3.5px),
+    radial-gradient(circle at 13px 50%, rgba(13, 27, 126, 0.46) 0 3px, transparent 3.5px);
+}
+
 .string-label {
   justify-content: start;
   padding-left: 4px;
@@ -373,13 +407,29 @@ h3 {
   place-items: center;
   min-height: 48px;
   border-width: 0 1px 0 0;
-  border-color: rgba(70, 54, 38, 0.26);
+  border-color: rgba(5, 1, 74, 0.24);
   border-radius: 0;
   font-size: 0.9rem;
   font-weight: 900;
   background:
-    linear-gradient(90deg, rgba(70, 54, 38, 0.16), transparent 7px),
-    linear-gradient(180deg, #fffdf8, #f7efe4);
+    linear-gradient(90deg, rgba(5, 1, 74, 0.12), transparent 7px),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
+}
+
+.fret-button.is-marker-column,
+.mini-cell.is-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.18), transparent 7px),
+    linear-gradient(180deg, rgba(13, 27, 126, 0.18), rgba(13, 27, 126, 0.12)),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
+}
+
+.fret-button.is-double-marker-column,
+.mini-cell.is-double-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.22), transparent 7px),
+    linear-gradient(180deg, rgba(5, 1, 74, 0.22), rgba(13, 27, 126, 0.16)),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
 }
 
 .fret-button::before {
@@ -387,14 +437,14 @@ h3 {
   position: absolute;
   inset: 50% 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, rgba(36, 31, 26, 0.18), rgba(36, 31, 26, 0.32), rgba(36, 31, 26, 0.18));
+  background: linear-gradient(90deg, rgba(5, 1, 74, 0.16), rgba(5, 1, 74, 0.34), rgba(5, 1, 74, 0.16));
   transform: translateY(-50%);
 }
 
 .fret-button.is-open-string {
   width: 42px;
-  border-right: 6px solid #6f5540;
-  background: #fffaf2;
+  border-right: 6px solid var(--nut);
+  background: var(--surface-warm);
 }
 
 .fret-button.is-open-string::after {
@@ -405,7 +455,7 @@ h3 {
   bottom: 7px;
   width: 2px;
   border-radius: 999px;
-  background: rgba(255, 253, 248, 0.75);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .fret-button span {
@@ -415,7 +465,7 @@ h3 {
   min-width: 30px;
   height: 30px;
   border-radius: 999px;
-  background: rgba(255, 253, 248, 0.94);
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .fret-button.is-picked {
@@ -444,11 +494,25 @@ h3 {
 }
 
 .interval-map .fret-button.is-tone {
-  border-color: rgba(70, 54, 38, 0.26);
+  border-color: rgba(5, 1, 74, 0.24);
   color: #fff;
   background:
-    linear-gradient(90deg, rgba(70, 54, 38, 0.16), transparent 7px),
-    linear-gradient(180deg, #fffdf8, #f7efe4);
+    linear-gradient(90deg, rgba(5, 1, 74, 0.12), transparent 7px),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
+}
+
+.interval-map .fret-button.is-tone.is-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.18), transparent 7px),
+    linear-gradient(180deg, rgba(13, 27, 126, 0.18), rgba(13, 27, 126, 0.12)),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
+}
+
+.interval-map .fret-button.is-tone.is-double-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.22), transparent 7px),
+    linear-gradient(180deg, rgba(5, 1, 74, 0.22), rgba(13, 27, 126, 0.16)),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
 }
 
 .interval-map .fret-button.is-tone span {
@@ -461,7 +525,7 @@ h3 {
 }
 
 .interval-map .fret-button.is-root {
-  border-color: rgba(70, 54, 38, 0.26);
+  border-color: rgba(5, 1, 74, 0.24);
 }
 
 .interval-map .fret-button.is-root span {
@@ -474,8 +538,22 @@ h3 {
 
 .scale-map .fret-button:not(.is-tone) {
   background:
-    linear-gradient(90deg, rgba(70, 54, 38, 0.1), transparent 7px),
-    linear-gradient(180deg, #fffdf8, #fbf4ea);
+    linear-gradient(90deg, rgba(5, 1, 74, 0.08), transparent 7px),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
+}
+
+.scale-map .fret-button:not(.is-tone).is-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.18), transparent 7px),
+    linear-gradient(180deg, rgba(13, 27, 126, 0.18), rgba(13, 27, 126, 0.12)),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
+}
+
+.scale-map .fret-button:not(.is-tone).is-double-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.22), transparent 7px),
+    linear-gradient(180deg, rgba(5, 1, 74, 0.22), rgba(13, 27, 126, 0.16)),
+    linear-gradient(180deg, var(--fret-wood-alt), var(--fret-wood));
 }
 
 .workspace {
@@ -541,22 +619,22 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 8px;
   text-align: left;
-  background: #fffdf8;
+  background: var(--surface);
 }
 
 .result-card.is-top {
   border-color: var(--accent);
-  background: linear-gradient(180deg, #f4fffe, #fffdf8);
+  background: linear-gradient(180deg, #eef3ff, var(--surface));
 }
 
 .result-card.is-chosen {
-  box-shadow: inset 0 0 0 3px rgba(177, 107, 29, 0.28);
+  box-shadow: inset 0 0 0 3px rgba(13, 27, 126, 0.22);
 }
 
 .chord-card.is-top,
 .degree-card.is-selected {
   border-color: var(--gold);
-  background: linear-gradient(180deg, #fff9ed, #fffdf8);
+  background: linear-gradient(180deg, #edf2ff, var(--surface));
 }
 
 .result-title {
@@ -604,17 +682,17 @@ h3 {
 }
 
 .note-pill {
-  color: #5c4430;
-  background: #f1e4d2;
+  color: #13285f;
+  background: #e5ebff;
 }
 
 .note-pill.missing {
-  color: #6a4b0c;
-  background: #f5e4bc;
+  color: #001f8f;
+  background: #d9e3ff;
 }
 
 .note-pill.outside {
-  color: #7b1230;
+  color: #0b1775;
   background: var(--rose-soft);
 }
 
@@ -630,7 +708,7 @@ h3 {
 .degree-card {
   gap: 7px;
   padding: 10px;
-  background: #fff7e9;
+  background: var(--surface-warm);
 }
 
 button.degree-card {
@@ -669,7 +747,7 @@ button.degree-card {
 }
 
 .voicing-card {
-  background: #fff7e9;
+  background: var(--surface-warm);
 }
 
 .voicing-tags {
@@ -683,10 +761,10 @@ button.degree-card {
   place-items: center;
   min-height: 22px;
   padding: 2px 7px;
-  border: 1px solid rgba(70, 54, 38, 0.18);
+  border: 1px solid rgba(5, 1, 74, 0.16);
   border-radius: 999px;
   color: var(--muted);
-  background: rgba(255, 253, 248, 0.78);
+  background: rgba(255, 255, 255, 0.78);
   font-size: 0.68rem;
   font-weight: 850;
   text-transform: uppercase;
@@ -722,9 +800,9 @@ button.degree-card {
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  border: 1px solid rgba(70, 54, 38, 0.22);
+  border: 1px solid rgba(5, 1, 74, 0.18);
   color: var(--muted);
-  background: #fffdf8;
+  background: var(--surface);
   font-size: 0.58rem;
   line-height: 1;
 }
@@ -743,11 +821,25 @@ button.degree-card {
   position: relative;
   border-width: 0 1px 0 0;
   border-style: solid;
-  border-color: rgba(70, 54, 38, 0.24);
+  border-color: rgba(5, 1, 74, 0.22);
   border-radius: 0;
   background:
-    linear-gradient(90deg, rgba(70, 54, 38, 0.12), transparent 6px),
-    #fffdf8;
+    linear-gradient(90deg, rgba(5, 1, 74, 0.1), transparent 6px),
+    var(--surface);
+}
+
+.mini-cell.is-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.16), transparent 6px),
+    linear-gradient(180deg, rgba(13, 27, 126, 0.17), rgba(13, 27, 126, 0.11)),
+    var(--surface);
+}
+
+.mini-cell.is-double-marker-column {
+  background:
+    linear-gradient(90deg, rgba(5, 1, 74, 0.2), transparent 6px),
+    linear-gradient(180deg, rgba(5, 1, 74, 0.2), rgba(13, 27, 126, 0.14)),
+    var(--surface);
 }
 
 .mini-cell::before {
@@ -755,14 +847,14 @@ button.degree-card {
   position: absolute;
   inset: 50% 0 auto;
   height: 2px;
-  background: rgba(36, 31, 26, 0.22);
+  background: rgba(5, 1, 74, 0.22);
   transform: translateY(-50%);
 }
 
 .mini-cell.is-open-string {
   width: 30px;
-  border-right: 5px solid #6f5540;
-  background: #fffaf2;
+  border-right: 5px solid var(--nut);
+  background: var(--surface-warm);
 }
 
 .mini-cell.is-tone {
@@ -791,7 +883,7 @@ button.degree-card {
   width: 9px;
   inset: -1px auto auto 50%;
   border-radius: 0;
-  background: rgba(177, 107, 29, 0.62);
+  background: rgba(13, 27, 126, 0.52);
   transform: translateX(-50%);
   z-index: 1;
 }
