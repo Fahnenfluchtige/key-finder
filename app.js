@@ -183,6 +183,43 @@
     ninth: [0, 2, 4, 6, 8]
   };
 
+  const OPEN_GUITAR_SHAPES = {
+    C: { "": [0, 1, 0, 2, 3, null], "7": [0, 1, 3, 2, 3, null], maj7: [0, 0, 0, 2, 3, null] },
+    D: { "": [2, 3, 2, 0, null, null], m: [1, 3, 2, 0, null, null], "7": [2, 1, 2, 0, null, null], m7: [1, 1, 2, 0, null, null], sus4: [3, 3, 2, 0, null, null] },
+    E: { "": [0, 0, 1, 2, 2, 0], m: [0, 0, 0, 2, 2, 0], "7": [0, 0, 1, 0, 2, 0], m7: [0, 3, 0, 2, 2, 0], sus4: [0, 0, 2, 2, 2, 0] },
+    G: { "": [3, 0, 0, 0, 2, 3], "7": [1, 0, 0, 0, 2, 3], sus4: [3, 1, 0, 0, 3, 3] },
+    A: { "": [0, 2, 2, 2, 0, null], m: [0, 1, 2, 2, 0, null], "7": [0, 2, 0, 2, 0, null], m7: [0, 1, 0, 2, 0, null], sus4: [0, 3, 2, 2, 0, null] },
+    B: { "7": [2, 0, 2, 1, 2, null], dim: [null, 3, 4, 3, 2, null], m7b5: [null, 3, 2, 3, 2, null] }
+  };
+
+  const MOVABLE_GUITAR_SHAPES = {
+    c: {
+      "": [0, 1, 0, 2, 3, null]
+    },
+    e: {
+      "": [0, 0, 1, 2, 2, 0],
+      m: [0, 0, 0, 2, 2, 0],
+      "7": [0, 0, 1, 0, 2, 0],
+      m7: [0, 0, 0, 0, 2, 0],
+      maj7: [0, 0, 1, 1, 2, 0],
+      sus4: [0, 0, 2, 2, 2, 0]
+    },
+    a: {
+      "": [0, 2, 2, 2, 0, null],
+      m: [0, 1, 2, 2, 0, null],
+      "7": [0, 2, 0, 2, 0, null],
+      m7: [0, 1, 0, 2, 0, null],
+      maj7: [0, 2, 1, 2, 0, null],
+      sus4: [0, 3, 2, 2, 0, null]
+    },
+    g: {
+      "": [3, 0, 0, 0, 2, 3]
+    },
+    d: {
+      "": [2, 3, 2, 0, null, null]
+    }
+  };
+
   const state = {
     counts: Object.fromEntries(NOTE_NAMES.map((note) => [note, 0])),
     history: [],
@@ -198,7 +235,8 @@
     libraryRoot: "C",
     libraryMode: "major",
     libraryDegree: 0,
-    libraryExtension: "triad"
+    libraryExtension: "triad",
+    libraryVoicingFilter: "all"
   };
 
   const elements = {
@@ -226,6 +264,7 @@
     libraryModeSelect: document.querySelector("#library-mode-select"),
     libraryDegreeSelect: document.querySelector("#library-degree-select"),
     libraryExtensionSelect: document.querySelector("#library-extension-select"),
+    libraryVoicingFilter: document.querySelector("#library-voicing-filter"),
     libraryScaleTitle: document.querySelector("#library-scale-title"),
     libraryScaleNotes: document.querySelector("#library-scale-notes"),
     libraryDegreeGrid: document.querySelector("#library-degree-grid"),
@@ -240,6 +279,38 @@
 
   function transpose(note, semitones) {
     return NOTE_NAMES[(NOTE_INDEX[note] + semitones + 120) % 12];
+  }
+
+  const FLAT_NOTE_NAMES = {
+    "C#": "Db",
+    "D#": "Eb",
+    "F#": "Gb",
+    "G#": "Ab",
+    "A#": "Bb"
+  };
+
+  const FLAT_MODE_IDS = new Set([
+    "natural-minor",
+    "harmonic-minor",
+    "melodic-minor",
+    "dorian",
+    "phrygian",
+    "mixolydian",
+    "locrian",
+    "minor-pentatonic",
+    "blues"
+  ]);
+
+  function shouldDisplayFlats(scale) {
+    return scale && !scale.root.includes("#") && FLAT_MODE_IDS.has(scale.scaleType.id);
+  }
+
+  function displayNote(note, scale) {
+    return shouldDisplayFlats(scale) ? FLAT_NOTE_NAMES[note] || note : note;
+  }
+
+  function displayNotes(notes, scale) {
+    return notes.map((note) => displayNote(note, scale)).join(" ");
   }
 
   function activeTuning() {
@@ -578,6 +649,100 @@
     }));
   }
 
+  function pickedFromFrets(chord, frets) {
+    const tuning = activeTuning();
+    const tones = chordToneMap(chord);
+    const toneByNote = new Map(tones.map((tone) => [tone.note, tone]));
+
+    return frets.map((fret, stringIndex) => {
+      if (fret === null) return null;
+      const note = noteAt(tuning.strings[stringIndex].note, fret);
+      const tone = toneByNote.get(note);
+      if (!tone) return null;
+      return { fret, note, label: tone.label };
+    });
+  }
+
+  function candidateFromFrets(chord, frets, scoreBoost) {
+    const picked = pickedFromFrets(chord, frets);
+    const notes = picked.filter(Boolean);
+    const uniqueNotes = new Set(notes.map((item) => item.note));
+    const fretted = notes.filter((item) => item.fret > 0).map((item) => item.fret);
+    const span = fretted.length ? Math.max(...fretted) - Math.min(...fretted) : 0;
+    const minFret = fretted.length ? Math.min(...fretted) : 0;
+    const key = picked.map((item) => (item ? item.fret : "x")).join("-");
+    return {
+      key,
+      picked,
+      score: 1000 + scoreBoost - span - minFret * 3,
+      span,
+      notes: [...uniqueNotes]
+    };
+  }
+
+  function shapeToFrets(shape, offset) {
+    return shape.map((fret) => (fret === null ? null : fret + offset));
+  }
+
+  function shapeFitsChord(chord, frets) {
+    const picked = pickedFromFrets(chord, frets);
+    const notes = picked.filter(Boolean).map((item) => item.note);
+    if (!notes.length) return false;
+    const unique = new Set(notes);
+    return chord.notes.slice(0, Math.min(3, chord.notes.length)).every((note) => unique.has(note));
+  }
+
+  function addKnownCandidate(candidates, chord, frets, scoreBoost) {
+    const numericFrets = frets.filter((fret) => fret !== null);
+    if (numericFrets.some((fret) => fret < 0 || fret > 15)) return;
+    if (!shapeFitsChord(chord, frets)) return;
+    candidates.push(candidateFromFrets(chord, frets, scoreBoost));
+  }
+
+  function knownGuitarVoicings(chord) {
+    if (state.instrument !== "guitar" || state.tuningId !== "guitar-standard") return [];
+    const suffix = chord.symbol.slice(chord.root.length);
+    const candidates = [];
+
+    const openShape = OPEN_GUITAR_SHAPES[chord.root] && OPEN_GUITAR_SHAPES[chord.root][suffix];
+    if (openShape) addKnownCandidate(candidates, chord, openShape, 130);
+    if (chord.root === "F" && suffix === "") {
+      addKnownCandidate(candidates, chord, [1, 1, 2, 3, null, null], 92);
+    }
+
+    const cShape = MOVABLE_GUITAR_SHAPES.c[suffix];
+    const cOffset = (NOTE_INDEX[chord.root] - NOTE_INDEX.C + 12) % 12;
+    if (cShape && cOffset >= 1 && cOffset <= 12) {
+      addKnownCandidate(candidates, chord, shapeToFrets(cShape, cOffset), 78);
+    }
+
+    const eShape = MOVABLE_GUITAR_SHAPES.e[suffix];
+    const eOffset = (NOTE_INDEX[chord.root] - NOTE_INDEX.E + 12) % 12;
+    if (eShape && eOffset >= 1 && eOffset <= 12) {
+      addKnownCandidate(candidates, chord, shapeToFrets(eShape, eOffset), 110);
+    }
+
+    const aShape = MOVABLE_GUITAR_SHAPES.a[suffix];
+    const aOffset = (NOTE_INDEX[chord.root] - NOTE_INDEX.A + 12) % 12;
+    if (aShape && aOffset >= 1 && aOffset <= 12) {
+      addKnownCandidate(candidates, chord, shapeToFrets(aShape, aOffset), 112);
+    }
+
+    const gShape = MOVABLE_GUITAR_SHAPES.g[suffix];
+    const gOffset = (NOTE_INDEX[chord.root] - NOTE_INDEX.G + 12) % 12;
+    if (gShape && gOffset >= 1 && gOffset <= 12) {
+      addKnownCandidate(candidates, chord, shapeToFrets(gShape, gOffset), 76);
+    }
+
+    const dShape = MOVABLE_GUITAR_SHAPES.d[suffix];
+    const dOffset = (NOTE_INDEX[chord.root] - NOTE_INDEX.D + 12) % 12;
+    if (dShape && dOffset >= 1 && dOffset <= 12) {
+      addKnownCandidate(candidates, chord, shapeToFrets(dShape, dOffset), 74);
+    }
+
+    return candidates;
+  }
+
   function renderTuningOptions() {
     const tunings = TUNINGS[state.instrument];
     elements.tuningSelect.innerHTML = "";
@@ -624,6 +789,7 @@
     });
     elements.libraryModeSelect.value = state.libraryMode;
     elements.libraryExtensionSelect.value = state.libraryExtension;
+    elements.libraryVoicingFilter.value = state.libraryVoicingFilter;
     renderLibraryDegreeSelect();
   }
 
@@ -877,11 +1043,12 @@
   }
 
   function renderIntervalLegend(tones) {
+    const scale = libraryScale();
     elements.intervalLegend.innerHTML = "";
     tones.forEach((tone) => {
       const pill = document.createElement("span");
       pill.className = "legend-pill";
-      pill.textContent = `${tone.label} = ${tone.note}`;
+      pill.textContent = `${tone.label} = ${displayNote(tone.note, scale)}`;
       elements.intervalLegend.append(pill);
     });
   }
@@ -937,7 +1104,7 @@
     const required = new Set(chord.notes.slice(0, Math.min(3, chord.notes.length)));
     const targetMinNotes = state.instrument === "bass" ? 2 : 3;
     const targetMaxNotes = state.instrument === "bass" ? Math.min(4, tuning.strings.length) : tuning.strings.length;
-    const candidates = [];
+    const candidates = [...knownGuitarVoicings(chord)];
 
     for (let start = 0; start <= 12; start += 1) {
       const end = Math.min(15, start + 4);
@@ -962,8 +1129,19 @@
           const span = fretted.length ? Math.max(...fretted) - Math.min(...fretted) : 0;
           if (span > 4) return;
           const openCount = notes.filter((item) => item.fret === 0).length;
+          const usedIndexes = picked.map((item, index) => (item ? index : null)).filter((index) => index !== null);
+          const stringSpan = usedIndexes.length ? Math.max(...usedIndexes) - Math.min(...usedIndexes) + 1 : 0;
+          const gaps = stringSpan - usedIndexes.length;
+          const barreCount = countBarreStrings(picked);
           const hasRootBass = notes[notes.length - 1] && notes[notes.length - 1].note === chord.root;
-          const score = uniqueNotes.size * 12 + notes.length * 2 + openCount + (hasRootBass ? 6 : 0) - span * 2;
+          const score =
+            uniqueNotes.size * 12 +
+            notes.length * 2 +
+            openCount +
+            barreCount * 2 +
+            (hasRootBass ? 6 : 0) -
+            span * 2 -
+            gaps * 9;
           const key = picked.map((item) => (item ? item.fret : "x")).join("-");
           candidates.push({ key, picked, score, span, notes: [...uniqueNotes] });
           return;
@@ -984,8 +1162,88 @@
     return [...unique.values()].slice(0, 6);
   }
 
+  function countBarreStrings(picked) {
+    const frets = new Map();
+    picked.forEach((item) => {
+      if (!item || item.fret === 0) return;
+      frets.set(item.fret, (frets.get(item.fret) || 0) + 1);
+    });
+    return Math.max(0, ...frets.values()) >= 2 ? Math.max(...frets.values()) : 0;
+  }
+
+  function barreRolesForVoicing(picked) {
+    const byFret = new Map();
+    const fretted = picked.filter(Boolean).filter((item) => item.fret > 0).map((item) => item.fret);
+    const minFret = fretted.length ? Math.min(...fretted) : 0;
+    picked.forEach((item, stringIndex) => {
+      if (!item || item.fret === 0) return;
+      if (!byFret.has(item.fret)) byFret.set(item.fret, []);
+      byFret.get(item.fret).push(stringIndex);
+    });
+
+    const roles = new Map();
+    byFret.forEach((indexes, fret) => {
+      const sorted = indexes.sort((a, b) => a - b);
+      if (fret === minFret && sorted.length >= 2) {
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        for (let stringIndex = first; stringIndex <= last; stringIndex += 1) {
+          const role = stringIndex === first ? "top" : stringIndex === last ? "bottom" : "middle";
+          roles.set(`${stringIndex}:${fret}`, role);
+        }
+        return;
+      }
+
+    });
+
+    return roles;
+  }
+
+  function classifyVoicing(voicing) {
+    const picked = voicing.picked || [];
+    const used = picked.filter(Boolean);
+    const fretted = used.filter((item) => item.fret > 0).map((item) => item.fret);
+    const openCount = used.filter((item) => item.fret === 0).length;
+    const barreRoles = barreRolesForVoicing(picked);
+    const barreStrings = new Set([...barreRoles.keys()].map((key) => key.split(":")[0])).size;
+    const minFret = fretted.length ? Math.min(...fretted) : 0;
+    const maxFret = fretted.length ? Math.max(...fretted) : 0;
+    const span = fretted.length ? maxFret - minFret : 0;
+    const tags = [];
+
+    if (openCount > 0) tags.push("open");
+    if (barreStrings >= 2) tags.push("barre");
+    if (minFret >= 3) tags.push("movable");
+    if (span <= 3 && minFret <= 3 && barreStrings < 2) tags.push("easy");
+
+    return tags.length ? tags : ["compact"];
+  }
+
+  function voicingMatchesFilter(voicing, filter) {
+    if (filter === "all") return true;
+    return classifyVoicing(voicing).includes(filter);
+  }
+
+  function voicingTagLabel(tag) {
+    return {
+      open: "open",
+      barre: "barre",
+      movable: "movable",
+      easy: "easy",
+      compact: "compact"
+    }[tag] || tag;
+  }
+
+  function stringStatusForVoicing(voicing, stringIndex) {
+    const picked = voicing.picked[stringIndex];
+    if (!picked) return { label: "x", type: "muted" };
+    if (picked.fret === 0) return { label: "o", type: "open" };
+    return { label: "", type: "fretted" };
+  }
+
   function renderMiniBoard(container, voicing) {
     const tuning = activeTuning();
+    const barreRoles = barreRolesForVoicing(voicing.picked);
     const fretted = voicing.picked.filter(Boolean).filter((item) => item.fret > 0).map((item) => item.fret);
     const hasOpen = voicing.picked.some((item) => item && item.fret === 0);
     const min = fretted.length ? Math.max(0, Math.min(...fretted) - 1) : 0;
@@ -1011,14 +1269,24 @@
 
     tuning.strings.forEach((stringInfo, stringIndex) => {
       const stringLabel = document.createElement("div");
-      stringLabel.className = "mini-label";
-      stringLabel.textContent = stringInfo.label;
+      stringLabel.className = "mini-label mini-string-label";
+      const name = document.createElement("span");
+      name.textContent = stringInfo.label;
+      const status = stringStatusForVoicing(voicing, stringIndex);
+      const statusLabel = document.createElement("span");
+      statusLabel.className = `string-status is-${status.type}`;
+      statusLabel.textContent = status.label;
+      stringLabel.append(name, statusLabel);
       container.append(stringLabel);
 
       frets.forEach((fret) => {
         const cell = document.createElement("div");
         cell.className = `mini-cell${fret === 0 ? " is-open-string" : ""}`;
         const picked = voicing.picked[stringIndex];
+        const barreRole = barreRoles.get(`${stringIndex}:${fret}`);
+        if (barreRole) {
+          cell.classList.add("is-barre", `is-barre-${barreRole}`);
+        }
         if (picked && picked.fret === fret) {
           cell.classList.add("is-tone");
           cell.dataset.label = picked.label;
@@ -1032,14 +1300,24 @@
   }
 
   function renderVoicings(chord) {
-    const voicings = generateVoicings(chord);
+    const scale = libraryScale();
+    const allVoicings = generateVoicings(chord);
+    const voicings = allVoicings.filter((voicing) => voicingMatchesFilter(voicing, state.libraryVoicingFilter));
     elements.voicingGrid.innerHTML = "";
     elements.voicingTitle.textContent = state.instrument === "bass" ? "Басовые варианты" : "Аппликатуры";
+
+    if (!allVoicings.length) {
+      const empty = document.createElement("div");
+      empty.className = "voicing-card";
+      empty.textContent = "Для этого строя не нашлось компактных вариантов в пределах 0-15 лада.";
+      elements.voicingGrid.append(empty);
+      return;
+    }
 
     if (!voicings.length) {
       const empty = document.createElement("div");
       empty.className = "voicing-card";
-      empty.textContent = "Для этого строя не нашлось компактных вариантов в пределах 0-15 лада.";
+      empty.textContent = "В этом фильтре вариантов нет. Попробуй режим \"Все\".";
       elements.voicingGrid.append(empty);
       return;
     }
@@ -1051,16 +1329,25 @@
       title.textContent = `Вариант ${index + 1}`;
       const notes = document.createElement("div");
       notes.className = "degree-notes";
-      notes.textContent = voicing.notes.join(" ");
+      notes.textContent = displayNotes(chord.notes.filter((note) => voicing.notes.includes(note)), scale);
+      const tags = document.createElement("div");
+      tags.className = "voicing-tags";
+      classifyVoicing(voicing).forEach((tag) => {
+        const pill = document.createElement("span");
+        pill.className = "voicing-tag";
+        pill.textContent = voicingTagLabel(tag);
+        tags.append(pill);
+      });
       const board = document.createElement("div");
       board.className = "mini-board";
       renderMiniBoard(board, voicing);
-      card.append(title, notes, board);
+      card.append(title, notes, tags, board);
       elements.voicingGrid.append(card);
     });
   }
 
   function renderLibraryDegreeGrid(chords) {
+    const scale = libraryScale();
     elements.libraryDegreeGrid.innerHTML = "";
     if (!chords.length) {
       const message = document.createElement("div");
@@ -1085,7 +1372,7 @@
 
       const notes = document.createElement("div");
       notes.className = "degree-notes";
-      notes.textContent = chord.notes.join(" ");
+      notes.textContent = displayNotes(chord.notes, scale);
       card.append(top, notes);
       card.addEventListener("click", () => {
         state.libraryDegree = index;
@@ -1103,7 +1390,7 @@
 
     renderLibrarySelects();
     elements.libraryScaleTitle.textContent = scaleName;
-    elements.libraryScaleNotes.textContent = scale.notes.join(" ");
+    elements.libraryScaleNotes.textContent = displayNotes(scale.notes, scale);
     renderLibraryDegreeGrid(chords);
 
     if (!selectedChord) {
@@ -1117,7 +1404,7 @@
 
     const tones = chordToneMap(selectedChord);
     elements.libraryMapTitle.textContent = `${selectedChord.degree} ${selectedChord.symbol}`;
-    elements.libraryMapNotes.textContent = selectedChord.notes.join(" ");
+    elements.libraryMapNotes.textContent = displayNotes(selectedChord.notes, scale);
     renderIntervalLegend(tones);
     renderToneMap(elements.libraryMapBoard, selectedChord);
     renderVoicings(selectedChord);
@@ -1283,6 +1570,11 @@
       renderLibrary();
     });
 
+    elements.libraryVoicingFilter.addEventListener("change", () => {
+      state.libraryVoicingFilter = elements.libraryVoicingFilter.value;
+      renderLibrary();
+    });
+
     document.querySelectorAll(".filter-button").forEach((button) => {
       button.addEventListener("click", () => {
         state.filter = button.dataset.filter;
@@ -1325,6 +1617,8 @@
     notesForScale,
     chordFromScaleDegree,
     intervalLabel,
+    displayNotes,
+    classifyVoicing,
     generateVoicings,
     state
   };

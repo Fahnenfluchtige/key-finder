@@ -229,7 +229,7 @@ h3 {
 }
 
 .library-controls {
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
 }
 
 .field,
@@ -634,6 +634,26 @@ button.degree-card {
   background: #fff7e9;
 }
 
+.voicing-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.voicing-tag {
+  display: inline-grid;
+  place-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid rgba(70, 54, 38, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 253, 248, 0.78);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
 .mini-board {
   display: grid;
   grid-template-columns: 34px var(--mini-fret-columns);
@@ -649,6 +669,36 @@ button.degree-card {
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 850;
+}
+
+.mini-string-label {
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  justify-items: stretch;
+  padding: 0 4px;
+}
+
+.string-status {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(70, 54, 38, 0.22);
+  color: var(--muted);
+  background: #fffdf8;
+  font-size: 0.58rem;
+  line-height: 1;
+}
+
+.string-status.is-muted {
+  opacity: 0.62;
+}
+
+.string-status.is-fretted {
+  border-color: transparent;
+  color: transparent;
+  background: transparent;
 }
 
 .mini-cell {
@@ -688,7 +738,7 @@ button.degree-card {
 .mini-cell.is-tone::after {
   content: attr(data-label);
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   place-items: center;
   min-width: 24px;
@@ -696,6 +746,28 @@ button.degree-card {
   border-radius: 999px;
   background: var(--accent);
   border: 2px solid #fff;
+}
+
+.mini-cell.is-barre::before {
+  height: calc(100% + 2px);
+  width: 9px;
+  inset: -1px auto auto 50%;
+  border-radius: 0;
+  background: rgba(177, 107, 29, 0.62);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.mini-cell.is-barre-top::before {
+  top: 50%;
+  height: calc(50% + 2px);
+  border-radius: 999px 999px 0 0;
+}
+
+.mini-cell.is-barre-bottom::before {
+  top: -1px;
+  height: calc(50% + 2px);
+  border-radius: 0 0 999px 999px;
 }
 
 @media (max-width: 900px) {
