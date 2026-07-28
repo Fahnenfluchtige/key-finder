@@ -1089,14 +1089,24 @@
         result.outside
       );
       card.addEventListener("click", () => {
-        state.selectedScaleKey = result.key;
-        state.scalePinned = true;
-        renderResults();
+        openResultOnFretboard(result);
       });
       elements.resultsList.append(card);
     });
 
     renderScaleDetails(selectedResult);
+  }
+
+  function openResultOnFretboard(result) {
+    state.selectedScaleKey = result.key;
+    state.scalePinned = true;
+    state.scaleRoot = result.root;
+    state.scaleMode = result.scaleType.id;
+    state.tab = "scales";
+    renderControls();
+    renderResults();
+    renderScaleExplorer();
+    document.querySelector("#scales-view").scrollIntoView({ block: "start" });
   }
 
   function renderDegreeCards(container, chords) {
@@ -1306,8 +1316,9 @@
     scale.notes.forEach((_, degree) => {
       const triad = chordFromScaleDegree(scale.notes, degree, "triad");
       const seventh = chordFromScaleDegree(scale.notes, degree, "seventh");
-      const card = document.createElement("article");
+      const card = document.createElement("button");
       card.className = "degree-card";
+      card.type = "button";
 
       const top = document.createElement("div");
       top.className = "degree-top";
@@ -1321,8 +1332,22 @@
       notes.className = "degree-notes";
       notes.textContent = displayNotes(triad.notes, scale);
       card.append(top, notes);
+      card.addEventListener("click", () => {
+        openScaleChordInLibrary(scale, degree, "seventh");
+      });
       elements.scaleRelatedChords.append(card);
     });
+  }
+
+  function openScaleChordInLibrary(scale, degree, extension) {
+    state.libraryRoot = scale.root;
+    state.libraryMode = scale.scaleType.id;
+    state.libraryDegree = degree;
+    state.libraryExtension = extension;
+    state.tab = "library";
+    renderControls();
+    renderLibrary();
+    document.querySelector("#library-view").scrollIntoView({ block: "start" });
   }
 
   function renderScaleExplorer() {
@@ -1878,7 +1903,10 @@
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
+      navigator.serviceWorker
+        .register("sw.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => {});
     });
   }
 

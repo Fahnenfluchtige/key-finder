@@ -27,6 +27,13 @@ async function clickFret(page, label) {
   assert.equal(await page.locator("#fretboard .fret-button.is-selected").count(), 0);
   assert.equal(await page.locator(".chord-card .result-title").first().textContent(), "C");
 
+  const firstDetectedTitle = await page.locator("#results-list .result-card .result-title").first().textContent();
+  await page.locator("#results-list .result-card").first().click();
+  assert.equal(await page.locator("#scales-view").evaluate((node) => node.hidden), false);
+  assert.equal(await page.locator(".tab-button.is-active").textContent(), "Гаммы");
+  assert.equal(await page.locator("#scale-map-title").textContent(), `${firstDetectedTitle} для гитары`);
+  await page.getByRole("button", { name: "Определитель" }).click();
+
   await page.locator("#center-select").selectOption("C");
   assert.equal(await page.locator("#detail-title").textContent(), "C major");
   assert.equal(await page.locator("#triad-row .degree-card").count(), 7);
@@ -111,6 +118,14 @@ async function clickFret(page, label) {
   const relatedScaleChords = await page.locator("#scale-related-chords").textContent();
   assert.ok(relatedScaleChords.includes("Cm / Cm7"), "C minor related chords should include Cm / Cm7");
   assert.ok(relatedScaleChords.includes("Eb / Ebmaj7"), "C minor related chords should include Eb / Ebmaj7");
+  await page.locator("#scale-related-chords .degree-card").first().click();
+  assert.equal(await page.locator(".tab-button.is-active").textContent(), "Библиотека аккордов");
+  assert.equal(await page.locator("#library-root-select").inputValue(), "C");
+  assert.equal(await page.locator("#library-mode-select").inputValue(), "natural-minor");
+  assert.equal(await page.locator("#library-extension-select").inputValue(), "seventh");
+  assert.equal(await page.locator("#library-degree-select").inputValue(), "0");
+  assert.equal(await page.locator("#library-map-title").textContent(), "I Cm7");
+  await page.getByRole("button", { name: "Гаммы" }).click();
   assert.ok((await page.locator("#scale-map-board").textContent()).includes("Eb"), "note-name mode should show note names");
   await page.getByRole("button", { name: "Ступени" }).click();
   assert.ok((await page.locator("#scale-map-board").textContent()).includes("b3"), "degree mode should show scale degrees");
